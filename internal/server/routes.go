@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sims-backend/internal/utils"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -31,9 +32,18 @@ func (s *FiberServer) RegisterFiberRoutes() {
 }
 
 func (s *FiberServer) HelloWorldHandler(c *fiber.Ctx) error {
-	resp := fiber.Map{
-		"message": "Hello World",
-	}
+	// Use the global response function
+	resp := utils.CreateResponse(
+		"SUCCESS",
+		"Hello World retrieved successfully.",
+		map[string]interface{}{
+			"message": "Hello World",
+		},
+		nil, // No error code
+		nil, // No error message
+		nil, // No error details
+		nil, // No pagination
+	)
 
 	return c.JSON(resp)
 }
