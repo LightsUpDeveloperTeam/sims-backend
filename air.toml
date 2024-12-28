@@ -1,0 +1,6 @@
+# air.toml
+[build]
+cmd = "go build -o ./bin/main ./cmd/api/main.go"
+bin = "./bin/main"
+watch_dir = "./cmd"
+exclude_dir = ["vendor", "bin"]
