@@ -1,13 +1,16 @@
-# Base image
-FROM golang:1.21
+# Base image with Go >=1.23
+FROM golang:1.23
 
 WORKDIR /app
 
 # Install Air for hot reloading
-RUN go install github.com/cosmtrek/air@latest
+RUN go install github.com/air-verse/air@latest
 
-# Copy application files
+# Copy all files
 COPY . .
+
+# Set Air configuration file path
+ENV AIR_CONFIG=.air.toml
 
 # Expose the application's default port
 EXPOSE 3000

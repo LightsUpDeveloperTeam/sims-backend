@@ -1,16 +1,16 @@
-# Simple Makefile for a Go project
+# Simple Makefile for a Go project running on Docker
 
 # Build the application
-all: build test
+all: docker-build
 
-build:
-	@echo "Building the application..."
-	@go build -o main.exe cmd/main.go
+docker-build:
+	@echo "Building the application inside Docker..."
+	@docker compose run --rm app go build -o main.exe cmd/api/main.go
 
 # Run the application
-run:
-	@echo "Running the application..."
-	@go run cmd/main.go
+docker-run-app:
+	@echo "Running the application inside Docker..."
+	@docker compose run --rm app go run cmd/api/main.go
 
 # Create all containers (App, DB, Redis, RabbitMQ)
 docker-run:
@@ -23,29 +23,23 @@ docker-down:
 	@docker compose down
 
 # Test the application
-test:
-	@echo "Running tests..."
-	@go test ./... -v
+docker-test:
+	@echo "Running tests inside Docker..."
+	@docker compose run --rm app go test ./... -v
 
 # Integration Tests for the application
-itest:
-	@echo "Running integration tests..."
-	@go test ./internal/database -v
+docker-itest:
+	@echo "Running integration tests inside Docker..."
+	@docker compose run --rm app go test ./internal/database -v
 
 # Clean the binary
-clean:
-	@echo "Cleaning up build artifacts..."
-	@rm -f main.exe
+docker-clean:
+	@echo "Cleaning up build artifacts inside Docker..."
+	@docker compose run --rm app rm -f main.exe
 
 # Live Reload with Air
-watch:
-	@echo "Starting live reload with Air..."
-	@if [ -x "$(command -v air)" ]; then \
-		air; \
-	else \
-		echo "Air not found, installing..."; \
-		go install github.com/cosmtrek/air@latest; \
-		air; \
-	fi
+docker-watch:
+	@echo "Starting live reload with Air inside Docker..."
+	@docker compose run --rm app air
 
-.PHONY: all build run test clean watch docker-run docker-down itest
+.PHONY: all docker-build docker-run-app docker-test docker-clean docker-watch docker-run docker-down docker-itest

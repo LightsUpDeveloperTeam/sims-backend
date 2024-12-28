@@ -4,8 +4,8 @@ tmp_dir = "tmp"
 
 [build]
   args_bin = []
-  bin = ".\\main.exe"
-  cmd = "make build"
+  bin = "./tmp/main" # Update: Output binary to ./tmp/main for Linux-friendly path
+  cmd = "go build -o ./tmp/main ./cmd/api/main.go" # Update: Use explicit go build command
   delay = 1000
   exclude_dir = ["assets", "tmp", "vendor", "testdata"]
   exclude_file = []
