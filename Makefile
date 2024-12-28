@@ -4,46 +4,48 @@
 all: build test
 
 build:
-	@echo "Building..."
-	
-	
-	@go build -o main.exe cmd/api/main.go
+	@echo "Building the application..."
+	@go build -o main.exe cmd/main.go
 
 # Run the application
 run:
-	@go run cmd/api/main.go
-# Create DB container
+	@echo "Running the application..."
+	@go run cmd/main.go
+
+# Create all containers (App, DB, Redis, RabbitMQ)
 docker-run:
+	@echo "Starting all containers (App, DB, Redis, RabbitMQ)..."
 	@docker compose up --build
 
-# Shutdown DB container
+# Shutdown all containers
 docker-down:
+	@echo "Stopping all containers..."
 	@docker compose down
 
 # Test the application
 test:
-	@echo "Testing..."
+	@echo "Running tests..."
 	@go test ./... -v
-# Integrations Tests for the application
+
+# Integration Tests for the application
 itest:
 	@echo "Running integration tests..."
 	@go test ./internal/database -v
 
 # Clean the binary
 clean:
-	@echo "Cleaning..."
-	@rm -f main
+	@echo "Cleaning up build artifacts..."
+	@rm -f main.exe
 
-# Live Reload
+# Live Reload with Air
 watch:
-	@powershell -ExecutionPolicy Bypass -Command "if (Get-Command air -ErrorAction SilentlyContinue) { \
+	@echo "Starting live reload with Air..."
+	@if [ -x "$(command -v air)" ]; then \
 		air; \
-		Write-Output 'Watching...'; \
-	} else { \
-		Write-Output 'Installing air...'; \
-		go install github.com/air-verse/air@latest; \
+	else \
+		echo "Air not found, installing..."; \
+		go install github.com/cosmtrek/air@latest; \
 		air; \
-		Write-Output 'Watching...'; \
-	}"
+	fi
 
 .PHONY: all build run test clean watch docker-run docker-down itest

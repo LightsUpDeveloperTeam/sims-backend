@@ -6,48 +6,62 @@ One Paragraph of project description goes here
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
 
-## MakeFile
+## Makefile Commands
 
-Run build make command with tests
-```bash
-make all
-```
+### Build and Run
 
-Build the application
-```bash
-make build
-```
+- **Run build make command with tests**:
+  ```bash
+  make all
+  ```
+- **Build the application**:
+  ```bash
+  make build
+  ```
+- **Run the application**:
+  ```bash
+  make run
+  ```
 
-Run the application
-```bash
-make run
-```
-Create DB container
-```bash
-make docker-run
-```
+### Containers
 
-Shutdown DB Container
-```bash
-make docker-down
-```
+- **Create containers for the application, database, Redis, and RabbitMQ**:
+  ```bash
+  make docker-run
+  ```
+- **Shutdown all containers**:
+  ```bash
+  make docker-down
+  ```
 
-DB Integrations Test:
-```bash
-make itest
-```
+### Testing
 
-Live reload the application:
-```bash
-make watch
-```
+- **Run the database integration tests**:
+  ```bash
+  make itest
+  ```
+- **Run the full test suite**:
+  ```bash
+  make test
+  ```
 
-Run the test suite:
-```bash
-make test
-```
+### Development
 
-Clean up binary from the last build:
-```bash
-make clean
-```
+- **Live reload the application**:
+  ```bash
+  make watch
+  ```
+
+### Clean-up
+
+- **Clean up binaries from the last build**:
+  ```bash
+  make clean
+  ```
+
+### Additional Information
+
+- **Monitor RabbitMQ in the browser (GUI)**:
+  - URL: [http://localhost:15672](http://localhost:15672)
+  - Default Username: `guest`
+  - Default Password: `guest`
