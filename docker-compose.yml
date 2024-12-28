@@ -5,6 +5,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
+    labels:
+      - dev.orbstack.domains=api.sims-backend.local
     environment:
       DB_USER: ${BLUEPRINT_DB_USERNAME}
       DB_PASSWORD: ${BLUEPRINT_DB_PASSWORD}
