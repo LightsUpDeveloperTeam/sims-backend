@@ -33,6 +33,22 @@ func (s *FiberServer) RegisterFiberRoutes() {
 	authHandler := authentication.NewAuthHandler(s.db)
 	s.App.Post("/auth/login", authHandler.Login)
 	s.App.Post("/auth/verify-otp", authHandler.VerifyOTP)
+
+	protected := s.App.Group("/protected", authentication.JWTMiddleware())
+	protected.Get("/profile", func(c *fiber.Ctx) error {
+		email := c.Locals("email")
+		resp := utils.CreateResponse(
+			"SUCCESS",
+			"Welcome to your account",
+			map[string]interface{}{"email": email},
+			nil, // No error code	
+			nil, // No error message
+			nil, // No error details
+			nil, // No pagination
+		)
+		
+		return c.JSON(resp)
+	})
 }
 
 func (s *FiberServer) HelloWorldHandler(c *fiber.Ctx) error {

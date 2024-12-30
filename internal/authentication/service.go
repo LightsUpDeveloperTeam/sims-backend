@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"time"
+
+	"github.com/golang-jwt/jwt/v4"
 )
 
 type AuthService struct {
@@ -15,6 +17,8 @@ type AuthService struct {
 func NewAuthService(repo *AuthRepository) *AuthService {
 	return &AuthService{Repo: repo}
 }
+
+var jwtSecret = []byte("jawaIsKey") 
 
 func (s *AuthService) GenerateOTP(email string) error {
 	log.Printf("Generating OTP for email: %s", email)
@@ -52,7 +56,7 @@ func (s *AuthService) VerifyOTP(email, otpCode string) (string, error) {
 	user, err := s.Repo.GetUserByEmail(email)
 	if err != nil {
 		log.Printf("Error finding user: %v", err)
-		return "", err
+		return "", errors.New("user not found")
 	}
 
 	otp, err := s.Repo.GetOTP(user.ID, otpCode)
@@ -64,13 +68,19 @@ func (s *AuthService) VerifyOTP(email, otpCode string) (string, error) {
 	err = s.Repo.MarkOTPAsUsed(otp.ID)
 	if err != nil {
 		log.Printf("Error marking OTP as used: %v", err)
-		return "", err
+		return "", errors.New("failed to mark OTP as used")
 	}
 
-	token := generateAccessToken(user.Email)
+	token, err := generateAccessToken(user.Email)
+	if err != nil {
+		log.Printf("Error generating access token: %v", err)
+		return "", errors.New("failed to generate access token")
+	}
+
 	log.Printf("OTP verified successfully, token generated: %s", token)
 	return token, nil
 }
+
 
 func generateRandomOTP() string {
 	number := make([]byte, 6)
@@ -82,6 +92,13 @@ func generateRandomOTP() string {
 	return fmt.Sprintf("%06d", int(number[0])*10000+int(number[1])*1000+int(number[2])*100+int(number[3])*10+int(number[4]))
 }
 
-func generateAccessToken(email string) string {
-	return fmt.Sprintf("token_for_%s", email)
+func generateAccessToken(email string) (string, error) {
+	claims := jwt.MapClaims{
+		"email": email,                     
+		"exp":   time.Now().Add(1 * time.Hour).Unix(), 
+		"iat":   time.Now().Unix(),        
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	return token.SignedString(jwtSecret)
 }
