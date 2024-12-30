@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sims-backend/internal/authentication"
 	"sims-backend/internal/utils"
 	"time"
 
@@ -29,6 +30,9 @@ func (s *FiberServer) RegisterFiberRoutes() {
 
 	s.App.Get("/websocket", websocket.New(s.websocketHandler))
 
+	authHandler := authentication.NewAuthHandler(s.db)
+	s.App.Post("/auth/login", authHandler.Login)
+	s.App.Post("/auth/verify-otp", authHandler.VerifyOTP)
 }
 
 func (s *FiberServer) HelloWorldHandler(c *fiber.Ctx) error {
