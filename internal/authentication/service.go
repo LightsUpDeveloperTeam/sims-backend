@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -18,7 +19,7 @@ func NewAuthService(repo *AuthRepository) *AuthService {
 	return &AuthService{Repo: repo}
 }
 
-var jwtSecret = []byte("jawaIsKey") 
+var jwtSecret = []byte(os.Getenv("JWT_SECRET_KEY")) 
 
 func (s *AuthService) GenerateOTP(email string) error {
 	log.Printf("Generating OTP for email: %s", email)
