@@ -39,7 +39,10 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(utils.CreateResponse(
-		"SUCCESS", "OTP sent to email", nil, nil, nil, nil, nil,
+		"SUCCESS",
+		"OTP sent to email",
+		nil,
+		nil, nil, nil, nil,
 	))
 }
 
@@ -51,20 +54,35 @@ func (h *AuthHandler) VerifyOTP(c *fiber.Ctx) error {
 
 	if err := c.BodyParser(&req); err != nil {
 		log.Printf("Invalid request payload: %v", err)
-		return c.Status(fiber.StatusBadRequest).JSON(utils.CreateResponse(
-			"ERROR", "Invalid request payload", nil, nil, nil, nil, nil,
-		))
+		resp := utils.CreateResponse(
+			"ERROR",
+			"Invalid request payload",
+			nil,
+			nil, nil, nil, nil,
+		)
+		return c.Status(fiber.StatusBadRequest).JSON(resp)
 	}
 
 	token, err := h.Service.VerifyOTP(req.Email, req.OTPCode)
 	if err != nil {
 		log.Printf("Failed to verify OTP: %v", err)
-		return c.Status(fiber.StatusUnauthorized).JSON(utils.CreateResponse(
-			"ERROR", err.Error(), nil, nil, nil, nil, nil,
-		))
+		resp := utils.CreateResponse(
+			"ERROR",
+			"Invalid or expired OTP",
+			nil,
+			nil,
+			nil,
+			nil,
+			nil,
+		)
+		return c.Status(fiber.StatusUnauthorized).JSON(resp)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(utils.CreateResponse(
-		"SUCCESS", "OTP verified successfully", map[string]string{"accessToken": token}, nil, nil, nil, nil,
-	))
+	resp := utils.CreateResponse(
+		"SUCCESS",
+		"OTP verified successfully",
+		map[string]string{"accessToken": token},
+		nil, nil, nil, nil,
+	)
+	return c.Status(fiber.StatusOK).JSON(resp)
 }
