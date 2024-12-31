@@ -103,3 +103,34 @@ func generateAccessToken(email string) (string, error) {
 
 	return token.SignedString(jwtSecret)
 }
+
+func generateRefreshToken(email string) (string, error) {
+	claims := jwt.MapClaims{
+		"email": email,
+		"exp":   time.Now().Add(7 * 24 * time.Hour).Unix(), 
+		"iat":   time.Now().Unix(),
+		"type":  "refresh", 
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(jwtSecret)
+}
+
+func validateToken(tokenString string) (*jwt.Token, jwt.MapClaims, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, jwt.NewValidationError("unexpected signing method", jwt.ValidationErrorSignatureInvalid)
+		}
+		return jwtSecret, nil
+	})
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		return nil, nil, jwt.NewValidationError("invalid token", jwt.ValidationErrorClaimsInvalid)
+	}
+
+	return token, claims, nil
+}

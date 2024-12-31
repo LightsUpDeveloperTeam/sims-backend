@@ -4,6 +4,8 @@ import (
 	"log"
 	"sims-backend/internal/database"
 	"sims-backend/internal/utils"
+	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -38,11 +40,37 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 		))
 	}
 
+	accessToken, err := generateAccessToken(req.Email)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(utils.CreateResponse(
+			"ERROR",
+			"Failed to generate access token",
+			nil,
+			nil, nil, nil, nil,
+		))
+	}
+
+	refreshToken, err := generateRefreshToken(req.Email)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(utils.CreateResponse(
+			"ERROR",
+			"Failed to generate refresh token",
+			nil,
+			nil, nil, nil, nil,
+		))
+	}
+
 	return c.Status(fiber.StatusOK).JSON(utils.CreateResponse(
 		"SUCCESS",
 		"OTP sent to email",
+		map[string]string{
+			"access_token":  accessToken,
+			"refresh_token": refreshToken,
+		},
 		nil,
-		nil, nil, nil, nil,
+		nil,
+		nil,
+		nil,
 	))
 }
 
@@ -85,4 +113,89 @@ func (h *AuthHandler) VerifyOTP(c *fiber.Ctx) error {
 		nil, nil, nil, nil,
 	)
 	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
+func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
+	var req struct {
+		RefreshToken string `json:"refresh_token"`
+	}
+
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(utils.CreateResponse(
+			"ERROR",
+			"Invalid request payload",
+			nil,
+			nil, nil, nil, nil,
+		))
+	}
+
+	_, claims, err := validateToken(req.RefreshToken)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(utils.CreateResponse(
+			"ERROR",
+			"Invalid or expired refresh token",
+			nil,
+			nil, nil, nil, nil,
+		))
+	}
+
+	tokenType, ok := claims["type"].(string)
+	if !ok || tokenType != "refresh" {
+		return c.Status(fiber.StatusUnauthorized).JSON(utils.CreateResponse(
+			"ERROR",
+			"Invalid token type",
+			nil,
+			nil, nil, nil, nil,
+		))
+	}
+
+	// Generate new access token
+	email, ok := claims["email"].(string)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(utils.CreateResponse(
+			"ERROR",
+			"Invalid token payload",
+			nil,
+			nil, nil, nil, nil,
+		))
+	}
+
+	newAccessToken, err := generateAccessToken(email)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(utils.CreateResponse(
+			"ERROR",
+			"Failed to generate access token",
+			nil,
+			nil, nil, nil, nil,
+		))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(utils.CreateResponse(
+		"SUCCESS",
+		"Access token refreshed successfully",
+		map[string]string{"NewAccessToken": newAccessToken},
+		nil, nil, nil, nil,
+	))
+}
+
+func (h *AuthHandler) Logout(c *fiber.Ctx) error {
+	authHeader := c.Get("Authorization")
+	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+
+	err := redisClient.Set(ctx, tokenString, "blacklisted", time.Hour).Err()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(utils.CreateResponse(
+			"ERROR",
+			"Failed to blacklist token",
+			nil,
+			nil, nil, nil, nil,
+		))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(utils.CreateResponse(
+		"SUCCESS",
+		"Logged out successfully",
+		nil,
+		nil, nil, nil, nil,
+	))
 }

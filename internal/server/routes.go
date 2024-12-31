@@ -33,6 +33,8 @@ func (s *FiberServer) RegisterFiberRoutes() {
 	authHandler := authentication.NewAuthHandler(s.db)
 	s.App.Post("/auth/login", authHandler.Login)
 	s.App.Post("/auth/verify-otp", authHandler.VerifyOTP)
+	s.App.Post("/auth/refresh-token", authHandler.RefreshToken)
+	s.App.Post("/auth/logout", authentication.JWTMiddleware() ,authHandler.Logout)
 
 	protected := s.App.Group("/protected", authentication.JWTMiddleware())
 	protected.Get("/profile", func(c *fiber.Ctx) error {
