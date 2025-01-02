@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"sims-backend/internal/authentication"
+	schools "sims-backend/internal/schools-master-data"
 	"sims-backend/internal/utils"
 	"time"
 
@@ -30,11 +31,11 @@ func (s *FiberServer) RegisterFiberRoutes() {
 
 	s.App.Get("/websocket", websocket.New(s.websocketHandler))
 
-	authHandler := authentication.NewAuthHandler(s.db)
-	s.App.Post("/auth/login", authHandler.Login)
-	s.App.Post("/auth/verify-otp", authHandler.VerifyOTP)
-	s.App.Post("/auth/refresh-token", authHandler.RefreshToken)
-	s.App.Post("/auth/logout", authentication.JWTMiddleware() ,authHandler.Logout)
+	authHandler := authentication.NewAuthHandler(s.db.GetGORMDB()) 
+	s.App.Post("/auth/login", authHandler.Login)                   
+	s.App.Post("/auth/verify-otp", authHandler.VerifyOTP)            
+	s.App.Post("/auth/refresh-token", authentication.JWTMiddleware(), authHandler.RefreshToken) 
+	s.App.Post("/auth/logout", authentication.JWTMiddleware(), authHandler.Logout)              	
 
 	protected := s.App.Group("/protected", authentication.JWTMiddleware())
 	protected.Get("/profile", func(c *fiber.Ctx) error {
@@ -51,6 +52,18 @@ func (s *FiberServer) RegisterFiberRoutes() {
 		
 		return c.JSON(resp)
 	})
+
+
+	schoolsRepo := schools.NewRepository(s.db.GetGORMDB())
+	schoolsService := schools.NewService(schoolsRepo)
+	schoolsHandler := schools.NewHandler(schoolsService)
+
+	schools := s.App.Group("/schools", authentication.JWTMiddleware())
+	schools.Post("/create", schoolsHandler.CreateSchools)      
+	schools.Get("/", schoolsHandler.GetSchools)       
+	schools.Get("/:id", schoolsHandler.GetSchoolByID)   
+	schools.Put("/:id", schoolsHandler.UpdateSchool)    
+	schools.Delete("/:id", schoolsHandler.DeleteSchool) 
 }
 
 func (s *FiberServer) HelloWorldHandler(c *fiber.Ctx) error {
