@@ -11,6 +11,8 @@ import (
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	_ "github.com/joho/godotenv/autoload"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 // Service represents a service that interacts with a database.
@@ -24,11 +26,12 @@ type Service interface {
 	Close() error
 
 	GetDB() *sql.DB
-
+	GetGORMDB() *gorm.DB
 }
 
 type service struct {
-	db *sql.DB
+	db     *sql.DB
+	gormDB *gorm.DB
 }
 
 var (
@@ -51,8 +54,17 @@ func New() Service {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// koneksi buat gorm
+	gormDB, err := gorm.Open(postgres.New(postgres.Config{
+		Conn: db,
+	}), &gorm.Config{})
+	if err != nil {
+		log.Fatal(err)
+	}
 	dbInstance = &service{
 		db: db,
+		gormDB: gormDB,
 	}
 	return dbInstance
 }
@@ -119,4 +131,8 @@ func (s *service) Close() error {
 
 func (s *service) GetDB() *sql.DB {
 	return s.db
+}
+
+func (s *service) GetGORMDB() *gorm.DB {
+	return s.gormDB
 }
