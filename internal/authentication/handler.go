@@ -91,10 +91,21 @@ func (h *AuthHandler) VerifyOTP(c *fiber.Ctx) error {
 		))
 	}
 
+	
+	refreshToken, err := generateRefreshToken(req.Email)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(utils.CreateResponse(
+			"ERROR",
+			"Failed to generate refresh token",
+			nil,
+			nil, nil, nil, nil,
+		))
+	}
+
 	return c.Status(fiber.StatusOK).JSON(utils.CreateResponse(
 		"SUCCESS",
 		"OTP verified successfully",
-		map[string]string{"accessToken": token},
+		map[string]string{"accessToken": token, "refreshToken": refreshToken},
 		nil, nil, nil, nil,
 	))
 }
