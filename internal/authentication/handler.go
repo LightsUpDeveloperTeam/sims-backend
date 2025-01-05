@@ -1,20 +1,19 @@
 package authentication
 
 import (
-	"log"
-	"sims-backend/internal/database"
 	"sims-backend/internal/utils"
 	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
 type AuthHandler struct {
 	Service *AuthService
 }
 
-func NewAuthHandler(db database.Service) *AuthHandler {
+func NewAuthHandler(db *gorm.DB) *AuthHandler {
 	repo := NewAuthRepository(db)
 	service := NewAuthService(repo)
 	return &AuthHandler{Service: service}
@@ -26,17 +25,21 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 	}
 
 	if err := c.BodyParser(&req); err != nil {
-		log.Printf("Invalid request payload: %v", err)
 		return c.Status(fiber.StatusBadRequest).JSON(utils.CreateResponse(
-			"ERROR", "Invalid request payload", nil, nil, nil, nil, nil,
+			"ERROR",
+			"Invalid request payload",
+			nil,
+			nil, nil, nil, nil,
 		))
 	}
 
 	err := h.Service.GenerateOTP(req.Email)
 	if err != nil {
-		log.Printf("Failed to generate OTP: %v", err)
 		return c.Status(fiber.StatusUnauthorized).JSON(utils.CreateResponse(
-			"ERROR", err.Error(), nil, nil, nil, nil, nil,
+			"ERROR",
+			err.Error(),
+			nil,
+			nil, nil, nil, nil,
 		))
 	}
 
@@ -64,15 +67,13 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 		"SUCCESS",
 		"OTP sent to email",
 		map[string]string{
-			"access_token":  accessToken,
-			"refresh_token": refreshToken,
+			"accessToken":  accessToken,
+			"refreshToken": refreshToken,
 		},
-		nil,
-		nil,
-		nil,
-		nil,
+		nil, nil, nil, nil,
 	))
 }
+
 
 func (h *AuthHandler) VerifyOTP(c *fiber.Ctx) error {
 	var req struct {
@@ -81,38 +82,24 @@ func (h *AuthHandler) VerifyOTP(c *fiber.Ctx) error {
 	}
 
 	if err := c.BodyParser(&req); err != nil {
-		log.Printf("Invalid request payload: %v", err)
-		resp := utils.CreateResponse(
-			"ERROR",
-			"Invalid request payload",
-			nil,
-			nil, nil, nil, nil,
-		)
-		return c.Status(fiber.StatusBadRequest).JSON(resp)
+		return c.Status(fiber.StatusBadRequest).JSON(utils.CreateResponse(
+			"ERROR", "Invalid request payload", nil, nil, nil, nil, nil,
+		))
 	}
 
 	token, err := h.Service.VerifyOTP(req.Email, req.OTPCode)
 	if err != nil {
-		log.Printf("Failed to verify OTP: %v", err)
-		resp := utils.CreateResponse(
-			"ERROR",
-			"Invalid or expired OTP",
-			nil,
-			nil,
-			nil,
-			nil,
-			nil,
-		)
-		return c.Status(fiber.StatusUnauthorized).JSON(resp)
+		return c.Status(fiber.StatusUnauthorized).JSON(utils.CreateResponse(
+			"ERROR", err.Error(), nil, nil, nil, nil, nil,
+		))
 	}
 
-	resp := utils.CreateResponse(
+	return c.Status(fiber.StatusOK).JSON(utils.CreateResponse(
 		"SUCCESS",
 		"OTP verified successfully",
 		map[string]string{"accessToken": token},
 		nil, nil, nil, nil,
-	)
-	return c.Status(fiber.StatusOK).JSON(resp)
+	))
 }
 
 func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
@@ -149,7 +136,6 @@ func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 		))
 	}
 
-	// Generate new access token
 	email, ok := claims["email"].(string)
 	if !ok {
 		return c.Status(fiber.StatusUnauthorized).JSON(utils.CreateResponse(
@@ -199,3 +185,5 @@ func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 		nil, nil, nil, nil,
 	))
 }
+
+
