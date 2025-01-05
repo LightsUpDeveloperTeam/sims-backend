@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"sims-backend/internal/attendance"
 	"sims-backend/internal/authentication"
 	schools "sims-backend/internal/schools-master-data"
 	"sims-backend/internal/utils"
@@ -59,11 +58,31 @@ func (s *FiberServer) RegisterFiberRoutes() {
 	schoolsHandler := schools.NewHandler(schoolsService)
 
 	schools := s.App.Group("/schools", authentication.JWTMiddleware())
+
 	schools.Post("/create", schoolsHandler.CreateSchools)
 	schools.Get("/", schoolsHandler.GetSchools)
 	schools.Get("/:id", schoolsHandler.GetSchoolByID)
 	schools.Put("/:id", schoolsHandler.UpdateSchool)
 	schools.Delete("/:id", schoolsHandler.DeleteSchool)
+
+	// User Management Routes
+	userRepo := usersmasterdata.NewRepository(s.db.GetGORMDB())
+	userService := usersmasterdata.NewService(userRepo)
+	userHandler := usersmasterdata.NewHandler(userService)
+
+	users := s.App.Group("/users", authentication.JWTMiddleware())
+	users.Post("/", userHandler.CreateUser)
+	users.Put("/:id", userHandler.UpdateUser)
+	users.Get("/:id", userHandler.GetUserByID)
+	users.Delete("/:id", userHandler.DeleteUser)
+
+	// Role and Permission Management Routes
+	users.Post("/roles", userHandler.CreateRole)
+	users.Put("/roles/:id", userHandler.UpdateRole)
+	users.Delete("/roles/:id", userHandler.DeleteRole)
+
+	users.Post("/permissions", userHandler.CreatePermission)
+	users.Post("/roles/assign-permission", userHandler.AssignPermissionToRole)
 
 	// attendance route
 	attendanceRepo := attendance.NewAttendanceRepository(s.db.GetGORMDB())
