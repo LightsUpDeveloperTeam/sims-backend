@@ -25,6 +25,10 @@ tmp/
 # .env file
 .env
 
+# mod and sum
+go.mod
+go.sum
+
 # Project build
 main
 *templ.go
