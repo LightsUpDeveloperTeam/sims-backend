@@ -43,33 +43,30 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 		))
 	}
 
-	accessToken, err := generateAccessToken(req.Email)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(utils.CreateResponse(
-			"ERROR",
-			"Failed to generate access token",
-			nil,
-			nil, nil, nil, nil,
-		))
-	}
+	// accessToken, err := generateAccessToken(req.Email)
+	// if err != nil {
+	// 	return c.Status(fiber.StatusInternalServerError).JSON(utils.CreateResponse(
+	// 		"ERROR",
+	// 		"Failed to generate access token",
+	// 		nil,
+	// 		nil, nil, nil, nil,
+	// 	))
+	// }
 
-	refreshToken, err := generateRefreshToken(req.Email)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(utils.CreateResponse(
-			"ERROR",
-			"Failed to generate refresh token",
-			nil,
-			nil, nil, nil, nil,
-		))
-	}
+	// refreshToken, err := generateRefreshToken(req.Email)
+	// if err != nil {
+	// 	return c.Status(fiber.StatusInternalServerError).JSON(utils.CreateResponse(
+	// 		"ERROR",
+	// 		"Failed to generate refresh token",
+	// 		nil,
+	// 		nil, nil, nil, nil,
+	// 	))
+	// }
 
 	return c.Status(fiber.StatusOK).JSON(utils.CreateResponse(
 		"SUCCESS",
 		"OTP sent to email",
-		map[string]string{
-			"accessToken":  accessToken,
-			"refreshToken": refreshToken,
-		},
+		nil,
 		nil, nil, nil, nil,
 	))
 }
