@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sims-backend/internal/attendance"
 	"sims-backend/internal/authentication"
 	schools "sims-backend/internal/schools-master-data"
 	usersmasterdata "sims-backend/internal/users-master-data"
@@ -32,11 +33,11 @@ func (s *FiberServer) RegisterFiberRoutes() {
 
 	s.App.Get("/websocket", websocket.New(s.websocketHandler))
 
-	authHandler := authentication.NewAuthHandler(s.db.GetGORMDB()) 
-	s.App.Post("/auth/login", authHandler.Login)                   
-	s.App.Post("/auth/verify-otp", authHandler.VerifyOTP)            
-	s.App.Post("/auth/refresh-token", authentication.JWTMiddleware(), authHandler.RefreshToken) 
-	s.App.Post("/auth/logout", authentication.JWTMiddleware(), authHandler.Logout)              	
+	authHandler := authentication.NewAuthHandler(s.db.GetGORMDB())
+	s.App.Post("/auth/login", authHandler.Login)
+	s.App.Post("/auth/verify-otp", authHandler.VerifyOTP)
+	s.App.Post("/auth/refresh-token", authentication.JWTMiddleware(), authHandler.RefreshToken)
+	s.App.Post("/auth/logout", authentication.JWTMiddleware(), authHandler.Logout)
 
 	protected := s.App.Group("/protected", authentication.JWTMiddleware())
 	protected.Get("/profile", func(c *fiber.Ctx) error {
@@ -45,21 +46,21 @@ func (s *FiberServer) RegisterFiberRoutes() {
 			"SUCCESS",
 			"Welcome to your account",
 			map[string]interface{}{"email": email},
-			nil, // No error code	
+			nil, // No error code
 			nil, // No error message
 			nil, // No error details
 			nil, // No pagination
 		)
-		
+
 		return c.JSON(resp)
 	})
-
 
 	schoolsRepo := schools.NewRepository(s.db.GetGORMDB())
 	schoolsService := schools.NewService(schoolsRepo)
 	schoolsHandler := schools.NewHandler(schoolsService)
 
 	schools := s.App.Group("/schools", authentication.JWTMiddleware())
+  
 	schools.Post("/create", schoolsHandler.CreateSchools)      
 	schools.Get("/", schoolsHandler.GetSchools)       
 	schools.Get("/:id", schoolsHandler.GetSchoolByID)   
@@ -85,6 +86,15 @@ func (s *FiberServer) RegisterFiberRoutes() {
 
 	users.Post("/permissions", userHandler.CreatePermission)
 	users.Post("/roles/assign-permission", userHandler.AssignPermissionToRole)
+  
+  // attendance route
+	attendanceRepo := attendance.NewAttendanceRepository(s.db.GetGORMDB())
+	attendanceService := attendance.NewAttendanceService(attendanceRepo)
+	attendanceHandler := attendance.NewAttendanceHandler(attendanceService)
+
+	attendance := s.App.Group("/attendance", authentication.JWTMiddleware())
+	attendance.Post("/clock-in", attendanceHandler.ClockIn)
+	attendance.Post("/clock-out", attendanceHandler.ClockOut)
 }
 
 func (s *FiberServer) HelloWorldHandler(c *fiber.Ctx) error {
