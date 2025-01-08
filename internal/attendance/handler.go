@@ -12,40 +12,23 @@ func NewAttendanceHandler(service *AttendanceService) *AttendanceHandler {
 	return &AttendanceHandler{Service: service}
 }
 
-func (h *AttendanceHandler) ClockIn(c *fiber.Ctx) error {
+func (h *AttendanceHandler) ClockInOut(c *fiber.Ctx) error {
 	var input struct {
-		UserID    uint    `json:"user_id"`
-		Latitude  float64 `json:"latitude"`
-		Longitude float64 `json:"longitude"`
+		UserID              uint    `json:"user_id"`
+		Latitude            float64 `json:"latitude"`
+		Longitude           float64 `json:"longitude"`
+		EarlyClockOutReason string  `json:"early_clockout_reason,omitempty"`
 	}
 
 	if err := c.BodyParser(&input); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid input"})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid input"})
 	}
 
-	record, err := h.Service.ClockIn(input.UserID, input.Latitude, input.Longitude)
+	// Panggil service untuk menangani logika clock-in atau clock-out
+	record, err := h.Service.ClockInOut(input.UserID, input.Latitude, input.Longitude, input.EarlyClockOutReason)
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	return c.Status(201).JSON(record)
-}
-
-func (h *AttendanceHandler) ClockOut(c *fiber.Ctx) error {
-	var input struct {
-		UserID    uint    `json:"user_id"`
-		Latitude  float64 `json:"latitude"`
-		Longitude float64 `json:"longitude"`
-	}
-
-	if err := c.BodyParser(&input); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "Invalid input"})
-	}
-
-	record, err := h.Service.ClockOut(input.UserID, input.Latitude, input.Longitude)
-	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	return c.Status(200).JSON(record)
+	return c.Status(fiber.StatusOK).JSON(record)
 }

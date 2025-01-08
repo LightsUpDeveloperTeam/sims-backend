@@ -63,7 +63,7 @@ func New() Service {
 		log.Fatal(err)
 	}
 	dbInstance = &service{
-		db: db,
+		db:     db,
 		gormDB: gormDB,
 	}
 	return dbInstance
