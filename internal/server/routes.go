@@ -1,148 +1,64 @@
 package server
 
 import (
-	"context"
-	"fmt"
 	"log"
 	"sims-backend/internal/attendance"
 	"sims-backend/internal/authentication"
-	schools "sims-backend/internal/schools-master-data"
-	usersmasterdata "sims-backend/internal/users-master-data"
-	"sims-backend/internal/utils"
-	"time"
-
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
+	"sims-backend/internal/schools-master-data"
+	"sims-backend/internal/users-master-data"
 
 	"github.com/gofiber/contrib/websocket"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"gorm.io/gorm"
 )
 
-func (s *FiberServer) RegisterFiberRoutes() {
-	// Apply CORS middleware
-	s.App.Use(cors.New(cors.Config{
+// RegisterFiberRoutes registers all routes for the application
+func RegisterFiberRoutes(app *fiber.App, db *gorm.DB) {
+	// Middleware for CORS
+	app.Use(cors.New(cors.Config{
 		AllowOrigins:     "*",
 		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS,PATCH",
 		AllowHeaders:     "Accept,Authorization,Content-Type",
-		AllowCredentials: false, // credentials require explicit origins
+		AllowCredentials: false,
 		MaxAge:           300,
 	}))
 
-	s.App.Get("/", s.HelloWorldHandler)
+	// Public routes
+	app.Get("/", HelloWorldHandler)
+	app.Get("/health", healthHandler)
+	app.Get("/websocket", websocket.New(websocketHandler))
 
-	s.App.Get("/health", s.healthHandler)
+	// Authentication routes
+	authHandler := authentication.NewAuthHandler(db)
+	app.Post("/auth/login", authHandler.Login)
+	app.Post("/auth/verify-otp", authHandler.VerifyOTP)
+	app.Post("/auth/refresh-token", authentication.JWTMiddleware(), authHandler.RefreshToken)
+	app.Post("/auth/logout", authentication.JWTMiddleware(), authHandler.Logout)
 
-	s.App.Get("/websocket", websocket.New(s.websocketHandler))
-
-	authHandler := authentication.NewAuthHandler(s.db.GetGORMDB())
-	s.App.Post("/auth/login", authHandler.Login)
-	s.App.Post("/auth/verify-otp", authHandler.VerifyOTP)
-	s.App.Post("/auth/refresh-token", authentication.JWTMiddleware(), authHandler.RefreshToken)
-	s.App.Post("/auth/logout", authentication.JWTMiddleware(), authHandler.Logout)
-
-	protected := s.App.Group("/protected", authentication.JWTMiddleware())
-	protected.Get("/profile", func(c *fiber.Ctx) error {
-		email := c.Locals("email")
-		resp := utils.CreateResponse(
-			"SUCCESS",
-			"Welcome to your account",
-			map[string]interface{}{"email": email},
-			nil, // No error code
-			nil, // No error message
-			nil, // No error details
-			nil, // No pagination
-		)
-
-		return c.JSON(resp)
-	})
-
-	schoolsRepo := schools.NewRepository(s.db.GetGORMDB())
-	schoolsService := schools.NewService(schoolsRepo)
-	schoolsHandler := schools.NewHandler(schoolsService)
-
-	schools := s.App.Group("/schools", authentication.JWTMiddleware())
-  
-	schools.Post("/create", schoolsHandler.CreateSchools)      
-	schools.Get("/", schoolsHandler.GetSchools)       
-	schools.Get("/:id", schoolsHandler.GetSchoolByID)   
-	schools.Put("/:id", schoolsHandler.UpdateSchool)    
-	schools.Delete("/:id", schoolsHandler.DeleteSchool) 
-
-
-	// User Management Routes
-	userRepo := usersmasterdata.NewRepository(s.db.GetGORMDB())
-	userService := usersmasterdata.NewService(userRepo)
-	userHandler := usersmasterdata.NewHandler(userService)
-
-	users := s.App.Group("/users", authentication.JWTMiddleware())
-	users.Post("/", userHandler.CreateUser)
-	users.Put("/:id", userHandler.UpdateUser)
-	users.Get("/:id", userHandler.GetUserByID)
-	users.Delete("/:id", userHandler.DeleteUser)
-
-	// Role and Permission Management Routes
-	users.Post("/roles", userHandler.CreateRole)
-	users.Put("/roles/:id", userHandler.UpdateRole)
-	users.Delete("/roles/:id", userHandler.DeleteRole)
-
-	users.Post("/permissions", userHandler.CreatePermission)
-	users.Post("/roles/assign-permission", userHandler.AssignPermissionToRole)
-  
-  // attendance route
-	attendanceRepo := attendance.NewAttendanceRepository(s.db.GetGORMDB())
-	attendanceService := attendance.NewAttendanceService(attendanceRepo)
-	attendanceHandler := attendance.NewAttendanceHandler(attendanceService)
-
-	attendance := s.App.Group("/attendance", authentication.JWTMiddleware())
-	attendance.Post("/clock-in", attendanceHandler.ClockIn)
-	attendance.Post("/clock-out", attendanceHandler.ClockOut)
+	// Modular routes
+	attendance.RegisterAttendanceRoutes(app, db)
+	schoolsmasterdata.RegisterSchoolRoutes(app, db)
+	usersmasterdata.RegisterUserRoutes(app, db)
 }
 
-func (s *FiberServer) HelloWorldHandler(c *fiber.Ctx) error {
-	// Use the global response function
-	resp := utils.CreateResponse(
-		"SUCCESS",
-		"Hello World retrieved successfully.",
-		map[string]interface{}{
-			"message": "Hello World",
-		},
-		nil, // No error code
-		nil, // No error message
-		nil, // No error details
-		nil, // No pagination
-	)
-
-	return c.JSON(resp)
+// Handlers for basic routes
+func HelloWorldHandler(c *fiber.Ctx) error {
+	return c.JSON(map[string]string{"message": "Hello World"})
 }
 
-func (s *FiberServer) healthHandler(c *fiber.Ctx) error {
-	return c.JSON(s.db.Health())
+func healthHandler(c *fiber.Ctx) error {
+	return c.JSON(map[string]string{"status": "healthy"})
 }
 
-func (s *FiberServer) websocketHandler(con *websocket.Conn) {
-	ctx, cancel := context.WithCancel(context.Background())
-
-	go func() {
-		for {
-			_, _, err := con.ReadMessage()
-			if err != nil {
-				cancel()
-				log.Println("Receiver Closing", err)
-				break
-			}
-		}
-	}()
-
+func websocketHandler(con *websocket.Conn) {
 	for {
-		select {
-		case <-ctx.Done():
-			return
-		default:
-			payload := fmt.Sprintf("server timestamp: %d", time.Now().UnixNano())
-			if err := con.WriteMessage(websocket.TextMessage, []byte(payload)); err != nil {
-				log.Printf("could not write to socket: %v", err)
-				return
-			}
-			time.Sleep(time.Second * 2)
+		messageType, message, err := con.ReadMessage()
+		if err != nil {
+			log.Println("WebSocket Error:", err)
+			break
 		}
+		log.Printf("Received message: %s", message)
+		con.WriteMessage(messageType, []byte("Echo: "+string(message)))
 	}
 }

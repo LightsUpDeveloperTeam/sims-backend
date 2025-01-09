@@ -71,7 +71,6 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 	))
 }
 
-
 func (h *AuthHandler) VerifyOTP(c *fiber.Ctx) error {
 	var req struct {
 		Email   string `json:"email"`
@@ -91,7 +90,6 @@ func (h *AuthHandler) VerifyOTP(c *fiber.Ctx) error {
 		))
 	}
 
-	
 	refreshToken, err := generateRefreshToken(req.Email)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.CreateResponse(
@@ -193,5 +191,3 @@ func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 		nil, nil, nil, nil,
 	))
 }
-
-

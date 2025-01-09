@@ -100,7 +100,7 @@ func (h *Handler) DeleteUser(c *fiber.Ctx) error {
 	if err != nil {
 		log.Printf("Error deleting user by ID: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.CreateResponse(
-			"ERROR", err.Error(), nil, nil, nil, nil, nil,))
+			"ERROR", err.Error(), nil, nil, nil, nil, nil))
 	}
 
 	return c.JSON(utils.CreateResponse(
@@ -202,4 +202,3 @@ func (h *Handler) AssignPermissionToRole(c *fiber.Ctx) error {
 		"SUCCESS", "Permission assigned to role successfully", nil, nil, nil, nil, nil,
 	))
 }
-
