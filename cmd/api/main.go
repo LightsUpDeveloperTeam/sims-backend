@@ -11,58 +11,71 @@ import (
 	"syscall"
 	"time"
 
-	_ "github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
-
-	_ "github.com/joho/godotenv/autoload"
+	"github.com/joho/godotenv"
 )
 
 func gracefulShutdown(fiberServer *server.FiberServer, done chan bool) {
-	// Create context that listens for the interrupt signal from the OS.
+	// Create context that listens for the interrupt signal from the OS
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	// Listen for the interrupt signal.
 	<-ctx.Done()
 
-	log.Println("shutting down gracefully, press Ctrl+C again to force")
+	log.Println("Shutting down gracefully, press Ctrl+C again to force")
 
-	// The context is used to inform the server it has 5 seconds to finish
-	// the request it is currently handling
+	// Timeout context for shutdown
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+
 	if err := fiberServer.ShutdownWithContext(ctx); err != nil {
 		log.Printf("Server forced to shutdown with error: %v", err)
 	}
 
-	log.Println("Server exiting")
+	log.Println("Server exited gracefully")
 
-	// Notify the main goroutine that the shutdown is complete
+	// Notify shutdown completion
 	done <- true
 }
 
 func main() {
+	// Load environment variables
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("No .env file found, falling back to system environment variables")
+	}
 
+	// Initialize the Fiber server
 	server := server.New()
 
+	// Register routes
 	server.RegisterFiberRoutes()
 
-	// Create a done channel to signal when the shutdown is complete
+	// Create a channel for shutdown signal
 	done := make(chan bool, 1)
 
+	// Start the server
 	go func() {
-		port, _ := strconv.Atoi(os.Getenv("PORT"))
-		err := server.Listen(fmt.Sprintf(":%d", port))
+		portStr := os.Getenv("PORT")
+		if portStr == "" {
+			log.Fatal("Environment variable PORT is not set")
+		}
+
+		port, err := strconv.Atoi(portStr)
+		if err != nil || port < 1 || port > 65535 {
+			log.Fatalf("Invalid PORT: %v", err)
+		}
+
+		log.Printf("Starting server on port %d", port)
+		err = server.Listen(fmt.Sprintf(":%d", port))
 		if err != nil {
-			panic(fmt.Sprintf("http server error: %s", err))
+			log.Fatalf("HTTP server error: %s", err)
 		}
 	}()
 
-	// Run graceful shutdown in a separate goroutine
+	// Handle graceful shutdown
 	go gracefulShutdown(server, done)
 
-	// Wait for the graceful shutdown to complete
+	// Wait for the shutdown process to complete
 	<-done
 	log.Println("Graceful shutdown complete.")
 }
