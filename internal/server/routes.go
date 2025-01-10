@@ -4,8 +4,8 @@ import (
 	"log"
 	"sims-backend/internal/attendance"
 	"sims-backend/internal/authentication"
-	"sims-backend/internal/schools-master-data"
-	"sims-backend/internal/users-master-data"
+	schoolsmasterdata "sims-backend/internal/masters/schools"
+	usersmasterdata "sims-backend/internal/masters/users"
 
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
