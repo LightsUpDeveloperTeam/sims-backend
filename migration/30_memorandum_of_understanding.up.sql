@@ -1,4 +1,4 @@
-CREATE TABLE mou (
+CREATE TABLE memorandum_of_understanding (
     id SERIAL PRIMARY KEY,
     industry_partner_id INT NOT NULL REFERENCES industry_partner(id),
     mou_number VARCHAR NOT NULL UNIQUE,

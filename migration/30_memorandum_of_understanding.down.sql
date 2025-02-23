@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS memorandum_of_understanding;
