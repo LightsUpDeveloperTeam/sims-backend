@@ -1,63 +1,82 @@
 services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    command:
+      - "--api.insecure=true"                         # Enable the dashboard (insecure mode for local testing)
+      - "--providers.docker=true"                     # Enable Docker provider
+      - "--providers.docker.exposedbydefault=false"   # Only expose containers with explicit labels
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--providers.file.filename=/traefik_dynamic.yml"  # Load dynamic TLS configuration
     ports:
-      - "3000:3000"
-    labels:
-      - dev.orbstack.domains=api.sims-backend.local
+      - "80:80"
+      - "443:443"
+      - "8080:8080"    # Traefik dashboard available at http://localhost:8080
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./traefik_dynamic.yml:/traefik_dynamic.yml:ro"
+      - "./certs:/certs:ro"
+    networks:
+      - simsnet
+
+  api:
+    build: .
+    container_name: sims-backend
     environment:
-      DB_USER: ${BLUEPRINT_DB_USERNAME}
-      DB_PASSWORD: ${BLUEPRINT_DB_PASSWORD}
-      DB_NAME: ${BLUEPRINT_DB_DATABASE}
-      DB_HOST: db
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      RABBITMQ_HOST: rabbitmq
-      RABBITMQ_PORT: 5672
+      - PORT=3000
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=Host(`api.simsbe.test`)"
+      - "traefik.http.routers.api.entrypoints=websecure"
+      - "traefik.http.routers.api.tls=true"
+      - "traefik.http.routers.api.tls.domains[0].main=api.simsbe.test"
+      - "traefik.http.routers.api.tls.domains[0].sans=api.simsbe.test"
+      - "traefik.http.services.api.loadbalancer.server.port=3000"
     depends_on:
       - db
       - redis
       - rabbitmq
-    volumes:
-      - .:/app
-      - air-cache:/root/.air # Cache for Air
-    command: ["air"] # Use hot-reloading
-    working_dir: /app
+    networks:
+      - simsnet
 
   db:
     image: postgres:latest
+    container_name: sims-postgres
+    restart: always
     environment:
-      POSTGRES_USER: ${BLUEPRINT_DB_USERNAME}
-      POSTGRES_PASSWORD: ${BLUEPRINT_DB_PASSWORD}
-      POSTGRES_DB: ${BLUEPRINT_DB_DATABASE}
+      POSTGRES_USER: melkey
+      POSTGRES_PASSWORD: password1234
+      POSTGRES_DB: blueprint
     ports:
-      - "${BLUEPRINT_DB_PORT}:5432"
+      - "5432:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
+    networks:
+      - simsnet
 
   redis:
     image: redis:latest
-    command: redis-server --save 60 1 --loglevel warning
+    container_name: sims-redis
     ports:
       - "6379:6379"
-    volumes:
-      - redis-data:/data
+    networks:
+      - simsnet
 
   rabbitmq:
-    image: rabbitmq:management
+    image: rabbitmq:3-management:latest
+    container_name: sims-rabbitmq
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
     ports:
       - "5672:5672"
       - "15672:15672"
-    volumes:
-      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - simsnet
+
+networks:
+  simsnet:
 
 volumes:
   db-data:
-  redis-data:
-  rabbitmq-data:
-  air-cache:
