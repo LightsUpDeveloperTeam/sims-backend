@@ -1,164 +1,204 @@
-# Project sims-backend
+# 🚀 **Step-by-Step Guide to Run the Project**
 
-This is the backend service for the SIMS project, built using Go with a modular monolith architecture. It integrates PostgreSQL as the database, Redis for caching and session management, and RabbitMQ as the message broker.
-
-## Getting Started
-
-These instructions will help you set up the project in a Dockerized environment for development and testing purposes.
-
----
-
-## Prerequisites
-
+## **1️⃣ Install Required Dependencies**
 Ensure you have the following installed on your system:
-- Docker
-- Docker Compose
+
+- [Docker](https://www.docker.com/products/docker-desktop/) (latest version)
+- [Docker Compose](https://docs.docker.com/compose/install/)
+- OpenSSL (for self-signed SSL certificate)
 
 ---
 
-## Makefile Commands
+## **2️⃣ Clone the Repository**
+If you haven’t already, clone your repository:
 
-### Build and Run
-
-- **Build the application inside Docker**:
-  ```bash
-  make docker-build
-  ```
-- **Run the application inside Docker**:
-  ```bash
-  make docker-run-app
-  ```
-
-### Containers
-
-- **Create and start all containers (App, DB, Redis, RabbitMQ)**:
-  ```bash
-  make docker-run
-  ```
-- **Shutdown all containers**:
-  ```bash
-  make docker-down
-  ```
-
-### Testing
-
-- **Run all tests inside Docker**:
-  ```bash
-  make docker-test
-  ```
-- **Run the database integration tests inside Docker**:
-  ```bash
-  make docker-itest
-  ```
-
-### Development
-
-- **Live reload the application inside Docker**:
-  ```bash
-  make docker-watch
-  ```
-
-### Clean-up
-
-- **Clean up binaries inside Docker**:
-  ```bash
-  make docker-clean
-  ```
-
----
-
-## Monitoring and Debugging
-
-### RabbitMQ
-
-RabbitMQ comes with a built-in management interface for monitoring and debugging:
-- URL: [http://localhost:15672](http://localhost:15672)
-- Default Username: `guest`
-- Default Password: `guest`
-
----
-
-## Environment Variables
-
-The project uses the following environment variables, which are defined in a `.env` file:
-
-```dotenv
-# PostgreSQL
-BLUEPRINT_DB_USERNAME=postgres
-BLUEPRINT_DB_PASSWORD=password
-BLUEPRINT_DB_DATABASE=mydb
-BLUEPRINT_DB_PORT=5432
-
-# RabbitMQ
-RABBITMQ_DEFAULT_USER=guest
-RABBITMQ_DEFAULT_PASS=guest
-
-# Redis
-REDIS_HOST=redis
-REDIS_PORT=6379
+```bash
+git clone https://github.com/lightsupdeveloperteam/sims-backend.git
+cd sims-backend
 ```
 
 ---
 
-## Usage
+## **3️⃣ Setup `.env` Configuration**
+Create a `.env` file at the project root:
 
-1. **Build and start the application**:
-   ```bash
-   make docker-run
-   ```
+```bash
+touch .env
+```
 
-2. **Access the API**:
-  - Open your browser or use a tool like Postman to interact with the API at `http://localhost:3000`.
+Then, add the following environment variables:
 
-3. **Monitor RabbitMQ**:
-  - Visit the RabbitMQ management interface at `http://localhost:15672`.
+```ini
+# Application Config
+PORT=3000
+APP_ENV=local
 
-4. **Stop all services**:
-   ```bash
-   make docker-down
-   ```
+# Database Configuration
+BLUEPRINT_DB_HOST=db
+BLUEPRINT_DB_PORT=5432
+BLUEPRINT_DB_DATABASE=blueprint
+BLUEPRINT_DB_USERNAME=melkey
+BLUEPRINT_DB_PASSWORD=password1234
+BLUEPRINT_DB_SCHEMA=public
 
----
+# Redis Configuration
+REDIS_HOST=redis
+REDIS_PORT=6379
 
-## Project Architecture
+# RabbitMQ Configuration
+RABBITMQ_DEFAULT_USER=guest
+RABBITMQ_DEFAULT_PASS=guest
 
-This project follows a modular monolith architecture, organized as follows:
-- **App**: Main Go application.
-- **Database**: PostgreSQL.
-- **Cache/Session Manager**: Redis.
-- **Message Broker**: RabbitMQ.
+# JWT Secret Key
+JWT_SECRET_KEY=my_super_secret_key
 
----
+# Traefik Configuration
+FQDN_DOMAIN=api.simsbe.test
+```
 
-## Contributing
-
-Contributions are welcome! Please follow the standard Git flow process:
-1. Fork the repository.
-2. Create a feature branch.
-3. Commit your changes.
-4. Submit a pull request.
-
----
-
-## License
-
-This project is licensed under the MIT License.
+> **🔹 Note:**  
+> - Ensure that `FQDN_DOMAIN` is set to `api.simsbe.test` as used in Traefik.
+> - The database and Redis use the **container names** (`db`, `redis`) as their hosts since they are within the same Docker network.
 
 ---
 
-### Highlights of the Updates
-1. **Docker-Focused Workflow**:
-   - Updated all commands to reference the Dockerized environment.
-   - Added instructions for using `make` commands for building, running, testing, and cleaning up.
+## **4️⃣ Generate SSL Certificates**
+Since Traefik requires a valid SSL certificate, generate a self-signed certificate:
 
-2. **Redis and RabbitMQ**:
-   - Included Redis and RabbitMQ usage details.
-   - Added RabbitMQ monitoring instructions.
+```bash
+mkdir certs
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout certs/api.simsbe.test.key \
+  -out certs/api.simsbe.test.crt \
+  -subj "/CN=api.simsbe.test/O=Local Testing"
+```
 
-3. **Environment Variables**:
-   - Highlighted the use of a `.env` file for easy configuration.
-
-4. **Architecture Overview**:
-   - Provided a brief description of the project's modular monolith architecture.
+This will create:
+- `certs/api.simsbe.test.key` (private key)
+- `certs/api.simsbe.test.crt` (certificate)
 
 ---
+
+## **5️⃣ Update Hosts File**
+You need to map `api.simsbe.test` to `127.0.0.1` for local testing.
+
+Edit your **hosts file**:
+
+- **Linux/macOS:**  
+  ```bash
+  sudo nano /etc/hosts
+  ```
+- **Windows:**  
+  Edit `C:\Windows\System32\drivers\etc\hosts` with Notepad (Run as Administrator).
+
+Add this line:
+
+```
+127.0.0.1  api.simsbe.test
+```
+
+Save and exit.
+
+---
+
+## **6️⃣ Build & Run Docker Containers**
+Now, start all services using **Docker Compose**:
+
+```bash
+docker-compose up --build
+```
+
+This will:
+- Build and run the **SIMS backend API**.
+- Start PostgreSQL, Redis, RabbitMQ.
+- Start **Traefik as a reverse proxy with HTTPS**.
+
+---
+
+## **7️⃣ Verify That Services Are Running**
+Check running containers:
+
+```bash
+docker ps
+```
+
+You should see something like this:
+
+```bash
+CONTAINER ID   IMAGE                  PORTS                                NAMES
+xxxxxxxxxxxx   traefik:latest         0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp  traefik
+xxxxxxxxxxxx   sims-backend           3000/tcp                             sims-backend
+xxxxxxxxxxxx   postgres:latest        0.0.0.0:5432->5432/tcp               sims-postgres
+xxxxxxxxxxxx   redis:latest           0.0.0.0:6379->6379/tcp               sims-redis
+xxxxxxxxxxxx   rabbitmq:3-management  0.0.0.0:5672->5672/tcp, 0.0.0.0:15672->15672/tcp sims-rabbitmq
+```
+
+---
+
+## **8️⃣ Test the API**
+Now, test if your API is running by visiting:
+
+🔹 **Secure API Endpoint:**  
+👉 [https://api.simsbe.test](https://api.simsbe.test) (your browser might warn about the self-signed SSL)
+
+Or use **cURL**:
+
+```bash
+curl -k https://api.simsbe.test
+```
+
+🔹 **RabbitMQ Management UI:**  
+👉 [http://localhost:15672](http://localhost:15672)  
+Login with:
+- **Username:** `guest`
+- **Password:** `guest`
+
+🔹 **Traefik Dashboard:**  
+👉 [http://localhost:8080](http://localhost:8080) (only for debugging)
+
+---
+
+## **9️⃣ Stop the Project**
+To stop all services:
+
+```bash
+docker-compose down
+```
+
+This will gracefully stop and remove the containers.
+
+---
+
+## **🔄 Optional: Auto-Restart on Code Changes**
+For live reloading, install **Air** (Go hot-reload tool):
+
+```bash
+go install github.com/cosmtrek/air@latest
+```
+
+Then, start the API inside the container in development mode:
+
+```bash
+docker exec -it sims-backend air
+```
+
+This will reload the Go app whenever code changes are detected.
+
+---
+
+# 🎯 **Project Summary**
+| **Component** | **Description** | **Access URL** |
+|--------------|----------------|---------------|
+| **Go API** | Main backend service | [https://api.simsbe.test](https://api.simsbe.test) |
+| **PostgreSQL** | Database | `postgres://melkey:password1234@db:5432/blueprint` |
+| **Redis** | Caching & session store | `redis://redis:6379` |
+| **RabbitMQ** | Message broker | `amqp://guest:guest@rabbitmq:5672/` |
+| **RabbitMQ UI** | Management dashboard | [http://localhost:15672](http://localhost:15672) |
+| **Traefik** | Reverse proxy & SSL termination | [http://localhost:8080](http://localhost:8080) |
+
+---
+
+# ✅ **Congratulations!** 🎉  
+You have successfully set up a **fully containerized development environment** for your **SIMS Backend** project using Docker, Traefik, PostgreSQL, Redis, and RabbitMQ!
+
+🚀 **Now you’re ready to start building your application!** 🚀
