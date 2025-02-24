@@ -1,0 +1,6 @@
+tls:
+  certificates:
+    - certFile: "/certs/api.simsbe.test.crt"
+      keyFile: "/certs/api.simsbe.test.key"
+      stores:
+        - default
