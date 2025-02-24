@@ -1,19 +1,17 @@
-# Base image with Go >=1.23
-FROM golang:1.23
-
+# Build stage
+FROM golang:1.18-alpine AS builder
 WORKDIR /app
-
-# Install Air for hot reloading
-RUN go install github.com/air-verse/air@latest
-
-# Copy all files
+# Copy go.mod and go.sum to download dependencies
+COPY go.mod go.sum ./
+RUN go mod download
+# Copy the entire project and build the binary
 COPY . .
+RUN CGO_ENABLED=0 go build -o /app/bin/api ./cmd/api/main.go
 
-# Set Air configuration file path
-ENV AIR_CONFIG=.air.toml
-
-# Expose the application's default port
+# Final stage
+FROM alpine:latest
+WORKDIR /root/
+# Copy the compiled binary from the builder stage
+COPY --from=builder /app/bin/api .
 EXPOSE 3000
-
-# Run with Air for hot-reloading
-CMD ["air"]
+CMD ["./api"]
