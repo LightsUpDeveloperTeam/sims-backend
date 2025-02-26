@@ -5,6 +5,8 @@ CREATE TABLE internship_vacancy (
     description TEXT NOT NULL,
     open_date DATE NOT NULL,
     close_date DATE NOT NULL,
+    deleted_by BIGINT,
+    deleted_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );

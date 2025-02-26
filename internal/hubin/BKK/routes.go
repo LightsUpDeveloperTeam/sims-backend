@@ -24,9 +24,9 @@ func InternshipRegistrationRoutes(app *fiber.App, db *gorm.DB) {
 	InternshipRegistrationService := NewService(InternshipRegistrationRepo)
 	InternshipRegistrationHandler := NewHandler(InternshipRegistrationService)
 
-	InternshipRegistrationGroup := app.Group("/vacancy", authentication.JWTMiddleware())
+	InternshipRegistrationGroup := app.Group("/internship_registration", authentication.JWTMiddleware())
 	InternshipRegistrationGroup.Post("/create", InternshipRegistrationHandler.CreateRegistration)
-	InternshipRegistrationGroup.Get("/", InternshipRegistrationHandler.GetVacancies)
+	InternshipRegistrationGroup.Get("/", InternshipRegistrationHandler.GetRegistrationByID)
 	InternshipRegistrationGroup.Get("/:id", InternshipRegistrationHandler.GetRegistrationByID)
 	InternshipRegistrationGroup.Delete("/:id", InternshipRegistrationHandler.DeleteRegistration)
 }
@@ -36,9 +36,9 @@ func AlumnusDistributionRoutes(app *fiber.App, db *gorm.DB) {
 	AlumnusDistributionService := NewService(AlumnusDistributionRepo)
 	AlumnusDistributionHandler := NewHandler(AlumnusDistributionService)
 
-	AlumnusDistributionGroup := app.Group("/vacancy", authentication.JWTMiddleware())
+	AlumnusDistributionGroup := app.Group("/alumnus_distribution", authentication.JWTMiddleware())
 	AlumnusDistributionGroup.Post("/create", AlumnusDistributionHandler.CreateDistribution)
-	AlumnusDistributionGroup.Get("/", AlumnusDistributionHandler.GetVacancies)
+	AlumnusDistributionGroup.Get("/", AlumnusDistributionHandler.GetDistribution)
 	AlumnusDistributionGroup.Get("/:id", AlumnusDistributionHandler.GetDistributionByID)
 	AlumnusDistributionGroup.Put("/:id", AlumnusDistributionHandler.UpdateDistribution)
 	AlumnusDistributionGroup.Delete("/:id", AlumnusDistributionHandler.DeleteDistribution)

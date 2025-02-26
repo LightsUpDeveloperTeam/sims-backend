@@ -8,34 +8,53 @@ import (
 )
 
 type InternshipVacancy struct {
-	Id                uint64      `gorm:"primaryKey;autoIncrement" json:"id"`
+	ID                uint64      `gorm:"primaryKey;autoIncrement" json:"id"`
 	IndustryPartnerId uint64      `gorm:"primaryKey" json:"industry_partner_id"`
 	PositionName      string      `gorm:"not null" json:"position_name"`
 	Description       string      `gorm:"not null" json:"description"`
 	OpenDate          *CustomDate `gorm:"not null" json:"open_date"`
+	CloseDate         *CustomDate `gorm:"not null" json:"close_date"`
+	DeletedBy         *uint64     `json:"deleted_by"`
+	DeletedAt         *time.Time  `json:"deleted_at"`
 	CreatedAt         time.Time   `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt         time.Time   `gorm:"autoUpdateTime" json:"updated_at"`
 }
 
 type InternshipRegistration struct {
-	Id                  uint64      `gorm:"primaryKey;autoIncrement" json:"id"`
+	ID                  uint64      `gorm:"primaryKey;autoIncrement" json:"id"`
 	StudentId           uint64      `gorm:"primaryKey" json:"student_id"`
 	InternshipVacancyId uint64      `gorm:"primaryKey" json:"internship_vacancy_id"`
 	CompanyName         string      `gorm:"not null" json:"company_name"`
 	Position            string      `gorm:"not null" json:"position"`
 	RegistrationDate    *CustomDate `gorm:"not null" json:"registration_date"`
+	DeletedBy           *uint64     `json:"deleted_by"`
+	DeletedAt           *time.Time  `json:"deleted_at"`
 	CreatedAt           time.Time   `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt           time.Time   `gorm:"autoUpdateTime" json:"updated_at"`
 }
 
 type AlumnusDistribution struct {
-	Id          uint64      `gorm:"primaryKey;autoIncrement" json:"id"`
+	ID          uint64      `gorm:"primaryKey;autoIncrement" json:"id"`
 	StudentId   uint64      `gorm:"primaryKey" json:"student_id"`
 	CompanyName string      `gorm:"not null" json:"company_name"`
 	Position    string      `gorm:"not null" json:"position"`
 	StartDate   *CustomDate `gorm:"not null" json:"start_date"`
+	DeletedBy   *uint64     `json:"deleted_by"`
+	DeletedAt   *time.Time  `json:"deleted_at"`
 	CreatedAt   time.Time   `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt   time.Time   `gorm:"autoUpdateTime" json:"updated_at"`
+}
+
+func (InternshipVacancy) TableName() string {
+	return "internship_vacancy"
+}
+
+func (AlumnusDistribution) TableName() string {
+	return "alumnus_distribution"
+}
+
+func (InternshipRegistration) TableName() string {
+	return "internship_registration"
 }
 
 type CustomDate struct {

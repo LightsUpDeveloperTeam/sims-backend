@@ -100,7 +100,7 @@ func (h *Handler) UpdateVacancy(c *fiber.Ctx) error {
 			nil, nil, nil, nil, nil,
 		))
 	}
-	vacancy.Id = uint64(id)
+	vacancy.ID = uint64(id)
 
 	if err := h.Service.UpdateVacancy(&vacancy); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.CreateResponse(
@@ -120,25 +120,23 @@ func (h *Handler) UpdateVacancy(c *fiber.Ctx) error {
 func (h *Handler) DeleteVacancy(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
+		log.Printf("Error getting user ID from request: %v", err)
 		return c.Status(fiber.StatusBadRequest).JSON(utils.CreateResponse(
-			"ERROR",
-			"Invalid vacancy ID", nil,
-			nil, nil, nil, nil,
+			"ERROR", "Invalid user ID", nil, nil, nil, nil, nil,
 		))
 	}
 
-	if err := h.Service.DeleteVacancy(uint64(id)); err != nil {
+	deletedBy := uint64(1)
+
+	err = h.Service.DeleteVacancy(uint64(id), deletedBy)
+	if err != nil {
+		log.Printf("Error deleting user by ID: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.CreateResponse(
-			"ERROR",
-			err.Error(),
-			nil, nil, nil, nil, nil,
-		))
+			"ERROR", err.Error(), nil, nil, nil, nil, nil))
 	}
 
 	return c.JSON(utils.CreateResponse(
-		"SUCCESS",
-		"Vacancy deleted successfully",
-		nil, nil, nil, nil, nil,
+		"SUCCESS", "internship vacancy deleted successfully", nil, nil, nil, nil, nil,
 	))
 }
 
@@ -213,25 +211,23 @@ func (h *Handler) GetRegistrationByID(c *fiber.Ctx) error {
 func (h *Handler) DeleteRegistration(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
+		log.Printf("Error getting internship registration ID from request: %v", err)
 		return c.Status(fiber.StatusBadRequest).JSON(utils.CreateResponse(
-			"ERROR",
-			"Invalid registration ID", nil,
-			nil, nil, nil, nil,
+			"ERROR", "Invalid user ID", nil, nil, nil, nil, nil,
 		))
 	}
 
-	if err := h.Service.DeleteRegistration(uint64(id)); err != nil {
+	deletedBy := uint64(1)
+
+	err = h.Service.DeleteRegistration(uint64(id), deletedBy)
+	if err != nil {
+		log.Printf("Error deleting internship registration by ID: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.CreateResponse(
-			"ERROR",
-			err.Error(),
-			nil, nil, nil, nil, nil,
-		))
+			"ERROR", err.Error(), nil, nil, nil, nil, nil))
 	}
 
 	return c.JSON(utils.CreateResponse(
-		"SUCCESS",
-		"Registration deleted successfully",
-		nil, nil, nil, nil, nil,
+		"SUCCESS", "Internship registration deleted successfully", nil, nil, nil, nil, nil,
 	))
 }
 
@@ -287,7 +283,7 @@ func (h *Handler) GetDistributionByID(c *fiber.Ctx) error {
 		))
 	}
 
-	alumnusDistribution, err := h.Service.GetVacancyByID(uint64(id))
+	alumnusDistribution, err := h.Service.GetDistributionByID(uint64(id))
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(utils.CreateResponse(
 			"ERROR",
@@ -306,59 +302,51 @@ func (h *Handler) GetDistributionByID(c *fiber.Ctx) error {
 func (h *Handler) UpdateDistribution(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
+		log.Printf("Error getting alumnus distribution ID from request: %v", err)
 		return c.Status(fiber.StatusBadRequest).JSON(utils.CreateResponse(
-			"ERROR",
-			"Invalid alumnus distribution ID",
-			nil, nil, nil, nil, nil,
+			"ERROR", "Invalid alumnus distribution ID", nil, nil, nil, nil, nil,
 		))
 	}
-
+	log.Printf("Received request to update alumnus distribution: %d", id)
 	var alumnusDistribution AlumnusDistribution
 	if err := c.BodyParser(&alumnusDistribution); err != nil {
+		log.Printf("Error parsing request payload: %v", err)
 		return c.Status(fiber.StatusBadRequest).JSON(utils.CreateResponse(
-			"ERROR",
-			"Invalid request payload",
-			nil, nil, nil, nil, nil,
+			"ERROR", "Invalid request payload", nil, nil, nil, nil, nil,
 		))
 	}
-	alumnusDistribution.Id = uint64(id)
-
+	alumnusDistribution.ID = uint64(id)
 	if err := h.Service.UpdateDistribution(&alumnusDistribution); err != nil {
+		log.Printf("Error updating alumnus distribution: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.CreateResponse(
-			"ERROR",
-			err.Error(),
-			nil, nil, nil, nil, nil,
+			"ERROR", err.Error(), nil, nil, nil, nil, nil,
 		))
 	}
-
+	log.Printf("Updated alumnus distribution: %+v", alumnusDistribution)
 	return c.JSON(utils.CreateResponse(
-		"SUCCESS",
-		"Alumnus Distribution updated successfully", alumnusDistribution,
-		nil, nil, nil, nil,
+		"SUCCESS", "Alumnus distribution updated successfully", alumnusDistribution, nil, nil, nil, nil,
 	))
 }
 
 func (h *Handler) DeleteDistribution(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
+		log.Printf("Error getting alumnus distrtibution ID from request: %v", err)
 		return c.Status(fiber.StatusBadRequest).JSON(utils.CreateResponse(
-			"ERROR",
-			"Invalid alumnus distribution ID", nil,
-			nil, nil, nil, nil,
+			"ERROR", "Invalid alumnus distribution ID", nil, nil, nil, nil, nil,
 		))
 	}
 
-	if err := h.Service.DeleteDistribution(uint64(id)); err != nil {
+	deletedBy := uint64(1)
+
+	err = h.Service.DeleteDistribution(uint64(id), deletedBy)
+	if err != nil {
+		log.Printf("Error deleting alumnus distribution by ID: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(utils.CreateResponse(
-			"ERROR",
-			err.Error(),
-			nil, nil, nil, nil, nil,
-		))
+			"ERROR", err.Error(), nil, nil, nil, nil, nil))
 	}
 
 	return c.JSON(utils.CreateResponse(
-		"SUCCESS",
-		"Alumnus distribution deleted successfully",
-		nil, nil, nil, nil, nil,
+		"SUCCESS", "Alumnus distribution deleted successfully", nil, nil, nil, nil, nil,
 	))
 }

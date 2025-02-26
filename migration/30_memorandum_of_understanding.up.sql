@@ -6,6 +6,8 @@ CREATE TABLE memorandum_of_understanding (
     end_date DATE NOT NULL,
     description TEXT NOT NULL,
     mou_file VARCHAR NOT NULL,
+    deleted_by BIGINT,
+    deleted_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );

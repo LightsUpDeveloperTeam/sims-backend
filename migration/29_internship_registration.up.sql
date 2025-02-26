@@ -5,6 +5,8 @@ CREATE TABLE internship_registration (
     company_name VARCHAR NOT NULL UNIQUE,
     position VARCHAR NOT NULL,
     registration_date DATE NOT NULL,
+    deleted_by BIGINT,
+    deleted_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );

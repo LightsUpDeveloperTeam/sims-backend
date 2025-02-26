@@ -5,6 +5,8 @@ CREATE TABLE industry_partner (
     address VARCHAR NOT NULL UNIQUE,
     email VARCHAR NOT NULL UNIQUE,
     telephone_number VARCHAR NOT NULL UNIQUE,
+    deleted_by BIGINT,
+    deleted_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );

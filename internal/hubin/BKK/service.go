@@ -1,6 +1,9 @@
 package BKK
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 type Service struct {
 	Repo *Repository
@@ -13,7 +16,7 @@ func NewService(repo *Repository) *Service {
 // Internship Vacancy Services
 
 func (s *Service) CreateVacancy(vacancy *InternshipVacancy) error {
-	if vacancy.PositionName == "" || vacancy.Description == "" || vacancy.OpenDate == nil {
+	if vacancy.PositionName == "" || vacancy.Description == "" {
 		return errors.New("Fill all the vacancy details!")
 	}
 
@@ -32,8 +35,9 @@ func (s *Service) UpdateVacancy(vacancy *InternshipVacancy) error {
 	return s.Repo.UpdateVacancy(vacancy)
 }
 
-func (s *Service) DeleteVacancy(id uint64) error {
-	return s.Repo.DeleteVacancy(id)
+func (s *Service) DeleteVacancy(id uint64, deletedBy uint64) error {
+	fmt.Println("Service received ID:", id)
+	return s.Repo.DeleteVacancy(id, deletedBy)
 }
 
 // Registration Vacancy Services
@@ -54,14 +58,14 @@ func (s *Service) GetRegistrationByID(id uint64) (*InternshipRegistration, error
 	return s.Repo.GetRegistrationByID(id)
 }
 
-func (s *Service) DeleteRegistration(id uint64) error {
-	return s.Repo.DeleteRegistration(id)
+func (s *Service) DeleteRegistration(id uint64, deletedBy uint64) error {
+	return s.Repo.DeleteRegistration(id, deletedBy)
 }
 
 // Alumnus Distribution Services
 
 func (s *Service) CreateDistribution(distribution *AlumnusDistribution) error {
-	if distribution.CompanyName == "" || distribution.Position == "" || distribution.StartDate == nil {
+	if distribution.CompanyName == "" || distribution.Position == "" {
 		return errors.New("Fill all the distribution details!")
 	}
 
@@ -76,10 +80,10 @@ func (s *Service) GetDistributionByID(id uint64) (*AlumnusDistribution, error) {
 	return s.Repo.GetDistributionByID(id)
 }
 
-func (s *Service) UpdateDistribution(distribution *AlumnusDistribution) error {
-	return s.Repo.UpdateDistribution(distribution)
+func (s *Service) UpdateDistribution(alumnusDistribution *AlumnusDistribution) error {
+	return s.Repo.UpdateDistribution(alumnusDistribution)
 }
 
-func (s *Service) DeleteDistribution(id uint64) error {
-	return s.Repo.DeleteDistribution(id)
+func (s *Service) DeleteDistribution(id uint64, deletedBy uint64) error {
+	return s.Repo.DeleteDistribution(id, deletedBy)
 }

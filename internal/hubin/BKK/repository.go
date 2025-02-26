@@ -3,6 +3,8 @@ package BKK
 import (
 	"errors"
 	"gorm.io/gorm"
+	"log"
+	"time"
 )
 
 type Repository struct {
@@ -38,8 +40,12 @@ func (r *Repository) UpdateVacancy(internshipVacancy *InternshipVacancy) error {
 	return r.DB.Save(internshipVacancy).Error
 }
 
-func (r *Repository) DeleteVacancy(id uint64) error {
-	return r.DB.Delete(&InternshipVacancy{Id: id}).Error
+func (r *Repository) DeleteVacancy(id uint64, deletedBy uint64) error {
+	log.Printf("Deleting user with ID: %d, deletedBy: %d", id, deletedBy)
+	return r.DB.Model(&InternshipVacancy{}).Where("id = ?", id).Updates(map[string]interface{}{
+		"deleted_by": deletedBy,
+		"deleted_at": time.Now(),
+	}).Error
 }
 
 // Internship Registration Repositories
@@ -63,8 +69,12 @@ func (r *Repository) GetRegistrationByID(id uint64) (*InternshipRegistration, er
 	return &idInternshipRegistration, err
 }
 
-func (r *Repository) DeleteRegistration(id uint64) error {
-	return r.DB.Delete(&InternshipRegistration{Id: id}).Error
+func (r *Repository) DeleteRegistration(id uint64, deletedBy uint64) error {
+	log.Printf("Deleting user with ID: %d, deletedBy: %d", id, deletedBy)
+	return r.DB.Model(&InternshipRegistration{}).Where("id = ?", id).Updates(map[string]interface{}{
+		"deleted_by": deletedBy,
+		"deleted_at": time.Now(),
+	}).Error
 }
 
 // Alumnus Distribution Repositories
@@ -92,6 +102,10 @@ func (r *Repository) UpdateDistribution(alumnusDistribution *AlumnusDistribution
 	return r.DB.Save(alumnusDistribution).Error
 }
 
-func (r *Repository) DeleteDistribution(id uint64) error {
-	return r.DB.Delete(&AlumnusDistribution{Id: id}).Error
+func (r *Repository) DeleteDistribution(id uint64, deletedBy uint64) error {
+	log.Printf("Deleting alumnus distribution with ID: %d, deletedBy: %d", id, deletedBy)
+	return r.DB.Model(&AlumnusDistribution{}).Where("id = ?", id).Updates(map[string]interface{}{
+		"deleted_by": deletedBy,
+		"deleted_at": time.Now(),
+	}).Error
 }

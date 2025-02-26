@@ -9,6 +9,8 @@ CREATE TABLE collaboration_history (
     end_date DATE NOT NULL,
     description TEXT NOT NULL,
     status status_collaboration DEFAULT 'Inactive' NOT NULL,
+    deleted_by BIGINT,
+    deleted_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
