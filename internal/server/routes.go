@@ -4,6 +4,7 @@ import (
 	"log"
 	"sims-backend/internal/attendance"
 	"sims-backend/internal/authentication"
+	"sims-backend/internal/hubin/industry_partner"
 	schoolsmasterdata "sims-backend/internal/masters/schools"
 	usersmasterdata "sims-backend/internal/masters/users"
 
@@ -40,6 +41,8 @@ func RegisterFiberRoutes(app *fiber.App, db *gorm.DB) {
 	attendance.RegisterAttendanceRoutes(app, db)
 	schoolsmasterdata.RegisterSchoolRoutes(app, db)
 	usersmasterdata.RegisterUserRoutes(app, db)
+	industry_partner.CollaborationHistoryRoutes(app, db)
+	industry_partner.MemorandumOfUnderstandingRoutes(app, db)
 }
 
 // Handlers for basic routes
