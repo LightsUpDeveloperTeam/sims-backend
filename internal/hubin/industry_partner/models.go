@@ -1,0 +1,1 @@
+package industry_partner
